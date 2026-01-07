@@ -1,0 +1,26 @@
+- name: Deploy Kubernetes Application
+  hosts: k8s  # Replace with your target Kubernetes master host or group
+  gather_facts: yes
+
+  tasks:
+    - name: Delete Old Deployment
+      command: kubectl delete -f /home/ubuntu/deployment.yaml
+      # CRITICAL CHANGE: Prevents the pipeline from failing if the app 
+      # is not running yet (e.g., the very first run).
+      ignore_errors: yes
+
+    - name: Remove old manifest file
+      command: rm -rf /home/ubuntu/deployment.yaml
+      ignore_errors: yes # Safety check in case file is already gone
+
+    - name: Copy deployment.yaml to Kubernetes master
+      copy:
+        # CHANGE: Updated path from 'petstore' to 'banking-app'
+        src: /var/lib/jenkins/workspace/banking-app/deployment.yaml
+        dest: /home/ubuntu/
+      become: yes
+      become_user: root
+
+    - name: Apply Deployment
+      # This creates the Pods and Service for your Banking App
+      command: kubectl apply -f /home/ubuntu/deployment.yaml

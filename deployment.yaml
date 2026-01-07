@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: banking-app          # CHANGE: Updated deployment name
+spec:
+  selector:
+    matchLabels:
+      app: banking-app       # CHANGE: Updated label selector
+  replicas: 1 
+  template: 
+    metadata:
+      labels:
+        app: banking-app     # CHANGE: Must match the selector above
+    spec:
+      containers:
+      - name: banking-app
+        # CHANGE: Ensure this matches the image name you push in your Ansible playbook
+        image: sevenajay/banking-app:latest  
+        ports:
+        - containerPort: 80  # CHANGE: Nginx listens on Port 80, not 8080
+        imagePullPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: banking-service      # CHANGE: Updated service name
+spec:
+  # NOTE: On AWS EKS, this creates a Classic Load Balancer.
+  # On a simple EC2 kubeadm setup, you might need 'NodePort' instead.
+  type: LoadBalancer         
+  selector:
+    app: banking-app         # CHANGE: Points to the pods labeled 'banking-app'
+  ports:
+  - name: http
+    protocol: TCP
+    port: 80                 # The port you hit in the browser (http://loadbalancer:80)
+    targetPort: 80           # CHANGE: The port the container is listening on (Must match containerPort)
