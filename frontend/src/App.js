@@ -8,7 +8,7 @@ import Transfer from './components/Transfer';
 import TransactionHistory from './components/TransactionHistory';
 import AccountDetails from './components/AccountDetails';
 import ProtectedRoute from './components/ProtectedRoute';
-import HealthDashboard from './components/HealthDashboard';
+import HealthDashboard from './components/HealthDashboard'; // IMPORT NAME MATCHES FILE
 import './App.css';
 
 function App() {
