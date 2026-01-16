@@ -1,11 +1,7 @@
 - name: Docker Build and Push for Banking App
-  hosts: local  # Ensure this matches your Jenkins/Ansible host inventory
-  become: yes   # Run tasks with sudo privileges
+  hosts: local  # Ensure this matches your Jenkins/Ansible host inventory  # Run tasks with sudo privileges
 
-  tasks:
-    - name: Update apt package cache
-      apt:
-        update_cache: yes    
+  tasks:  
 
     - name: Build Docker Image
       command: docker build -t banking-app .
