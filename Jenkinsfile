@@ -2,27 +2,26 @@ pipeline {
     agent any
     
     tools {
-        // Must match the name you gave in Jenkins Global Tools Config
-        nodejs 'node16' 
+        nodejs 'node16'
+        // This name must match 'Manage Jenkins' -> 'Tools' -> 'SonarQube Scanner'
+        sonarScanner 'sonar-scanner' 
     }
     
     environment {
-        // This makes the docker hub password available as a variable
         DOCKER_CREDS = credentials('docker-hub-creds')
+        // Connects to the token we just saved
+        SONAR_TOKEN = credentials('sonar-token') 
     }
 
     stages {
         stage('Checkout') {
             steps {
-                // Pulls code from your 'main' branch
                 git branch: 'main', url: 'https://github.com/JeevanC37/DevopsSEE.git'
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                // Installs packages so we can run tests
-                // We use 'frontend' folder because your Dockerfile uses it
                 dir('frontend') {
                     sh 'npm install'
                 }
@@ -32,27 +31,43 @@ pipeline {
         stage('Test') {
             steps {
                 dir('frontend') {
-                    // This runs the React tests
-                    // We add --passWithNoTests just in case to prevent failure if empty
                     sh 'npm test -- --watchAll=false --passWithNoTests'
                 }
             }
         }
 
-        stage('Build & Push Image (Ansible)') {
+        stage('SonarQube Analysis (SAST)') {
             steps {
-                // This runs your Ansible playbook to Build and Push Docker Image
+                dir('frontend') {
+                    // Uses the 'sonar-server' we configured in Step 3
+                    withSonarQubeEnv('sonar-server') { 
+                        sh "sonar-scanner \
+                            -Dsonar.projectKey=banking-app \
+                            -Dsonar.sources=src \
+                            -Dsonar.host.url=http://localhost:9000 \
+                            -Dsonar.login=${SONAR_TOKEN}"
+                    }
+                }
+            }
+        }
+
+        stage('Build & Push Image') {
+            steps {
                 dir('Ansible') {
-                    // We pass the Docker creds to Ansible just in case, 
-                    // though your playbook might have them hardcoded (which is less secure but works for now)
                     sh 'ansible-playbook docker.yaml'
                 }
             }
         }
 
-        stage('Deploy to K8s (Ansible)') {
+        stage('Vulnerability Scan (Trivy)') {
             steps {
-                // This runs your Ansible playbook to Deploy to Kubernetes
+                // Scans the Docker image for High/Critical vulnerabilities
+                sh 'trivy image --severity HIGH,CRITICAL jeevanc370/banking-app:latest'
+            }
+        }
+
+        stage('Deploy to K8s') {
+            steps {
                 dir('Ansible') {
                     sh 'ansible-playbook k8s.yaml'
                 }
