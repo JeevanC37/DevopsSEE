@@ -9,11 +9,9 @@ const SystemHealth = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // 1. Fetch Real Data from Backend API
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Calls the Node.js endpoint we created: /api/system-health
         const res = await axios.get('/api/system-health');
         setHealthData(res.data);
         setError(null);
@@ -24,9 +22,7 @@ const SystemHealth = () => {
         setLoading(false);
       }
     };
-
     fetchData();
-    // Optional: Poll every 30 seconds for real-time updates
     const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
   }, []);
@@ -53,7 +49,6 @@ const SystemHealth = () => {
     return 'bg-yellow-100 text-yellow-800 border-yellow-300';
   };
 
-  // 2. Loading State
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -64,7 +59,6 @@ const SystemHealth = () => {
     );
   }
 
-  // 3. Error State
   if (error) {
     return (
       <div className="p-6 bg-red-50 border border-red-200 rounded-lg text-red-700 flex items-center gap-2">
@@ -73,8 +67,6 @@ const SystemHealth = () => {
     );
   }
 
-  // 4. Map API Data to UI Structure
-  // This transforms the raw JSON from backend into the Cards format
   const tools = [
     {
       name: 'Jenkins CI',
@@ -103,7 +95,7 @@ const SystemHealth = () => {
       status: 'Active', 
       metrics: {
         imageTag: 'latest',
-        scanStatus: 'Report Available' // You can link this to the detailed JSON if implemented
+        scanStatus: 'Report Available'
       }
     },
     {
@@ -125,58 +117,33 @@ const SystemHealth = () => {
         <p className="text-gray-600 mt-1">Real-time DevSecOps CI/CD Pipeline Status</p>
       </div>
 
-      {/* System Overview */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="border-l-4 border-l-green-600">
           <CardHeader className="pb-3">
-            <CardDescription className="flex items-center gap-2">
-              <Activity className="w-4 h-4" />
-              System Status
-            </CardDescription>
+            <CardDescription className="flex items-center gap-2"><Activity className="w-4 h-4" /> System Status</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">Operational</div>
-          </CardContent>
+          <CardContent><div className="text-2xl font-bold text-green-600">Operational</div></CardContent>
         </Card>
-
         <Card className="border-l-4 border-l-blue-600">
           <CardHeader className="pb-3">
-            <CardDescription className="flex items-center gap-2">
-              <Box className="w-4 h-4" />
-              Build Version
-            </CardDescription>
+            <CardDescription className="flex items-center gap-2"><Box className="w-4 h-4" /> Build Version</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">v1.2.0</div>
-          </CardContent>
+          <CardContent><div className="text-2xl font-bold text-blue-600">v1.2.0</div></CardContent>
         </Card>
-
         <Card className="border-l-4 border-l-purple-600">
           <CardHeader className="pb-3">
-            <CardDescription className="flex items-center gap-2">
-              <Server className="w-4 h-4" />
-              Environment
-            </CardDescription>
+            <CardDescription className="flex items-center gap-2"><Server className="w-4 h-4" /> Environment</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-600">Production (K8s)</div>
-          </CardContent>
+          <CardContent><div className="text-2xl font-bold text-purple-600">Production (K8s)</div></CardContent>
         </Card>
-
         <Card className="border-l-4 border-l-orange-600">
           <CardHeader className="pb-3">
-            <CardDescription className="flex items-center gap-2">
-              <Activity className="w-4 h-4" />
-              Live Nodes
-            </CardDescription>
+            <CardDescription className="flex items-center gap-2"><Activity className="w-4 h-4" /> Live Nodes</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{healthData?.k8s?.length || 0} Nodes</div>
-          </CardContent>
+          <CardContent><div className="text-2xl font-bold text-orange-600">{healthData?.k8s?.length || 0} Nodes</div></CardContent>
         </Card>
       </div>
 
-      {/* DevOps Tools Status */}
       <Card>
         <CardHeader>
           <CardTitle>DevOps Tools Status</CardTitle>
@@ -199,16 +166,14 @@ const SystemHealth = () => {
                           <CardDescription>{tool.description}</CardDescription>
                         </div>
                       </div>
-                      <Badge className={getStatusColor(tool.status)}>
-                        {tool.status}
-                      </Badge>
+                      <Badge className={getStatusColor(tool.status)}>{tool.status}</Badge>
                     </div>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-2 gap-3">
                       {Object.entries(tool.metrics).map(([key, value]) => (
                         <div key={key} className="p-3 bg-gray-50 rounded-lg">
-                          <p className="text-xs text-gray-600 capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</p>
+                          <p className="text-xs text-gray-600 capitalize">{key.replace(/([A-Z])/g, ' ').trim()}</p>
                           <p className="font-semibold text-gray-900 mt-1">{value}</p>
                         </div>
                       ))}
@@ -220,78 +185,7 @@ const SystemHealth = () => {
           </div>
         </CardContent>
       </Card>
-
-      {/* Quick Stats - Derived from Live Data */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-green-600" />
-              Quality Gate
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Sonar Status:</span>
-                <span className={`font-semibold ${healthData?.sonar?.status === 'OK' ? 'text-green-600' : 'text-red-600'}`}>
-                  {healthData?.sonar?.status || 'Unknown'}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Result:</span>
-                <span className="font-semibold text-gray-800">Passed</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-green-600" />
-              Security Scan
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Trivy Scan:</span>
-                <span className="font-semibold text-green-600">Completed</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Critical Vulns:</span>
-                <span className="font-semibold text-green-600">0</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Server className="w-5 h-5 text-green-600" />
-              Infrastructure
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Nodes Ready:</span>
-                <span className="font-semibold text-green-600">
-                  {healthData?.k8s?.filter(n => n.status === 'True').length} / {healthData?.k8s?.length}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Orchestrator:</span>
-                <span className="font-semibold text-green-600">Kubernetes</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 };
-
 export default SystemHealth;
