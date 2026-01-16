@@ -23,6 +23,10 @@
     - name: Push image
       command: docker push jeevanc370/banking-app:latest
 
+    - name: Remove old test container
+      command: docker rm -f bank-test
+      ignore_errors: yes   # Crucial: Keeps going if the container doesn't exist yet
+
     - name: Run container (Test)
       # CHANGE: 
       # 1. Name: pet1 -> bank-test
