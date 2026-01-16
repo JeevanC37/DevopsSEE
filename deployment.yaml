@@ -1,38 +1,48 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: banking-app          # CHANGE: Updated deployment name
+  name: banking-app
 spec:
   selector:
     matchLabels:
-      app: banking-app       # CHANGE: Updated label selector
+      app: banking-app
   replicas: 1 
   template: 
     metadata:
       labels:
-        app: banking-app     # CHANGE: Must match the selector above
+        app: banking-app
     spec:
       containers:
       - name: banking-app
-        # CHANGE: Ensure this matches the image name you push in your Ansible playbook
-        image: jeevanc370/banking-app:latest  
+        image: jeevanc370/banking-app:latest
         ports:
-        - containerPort: 80  # CHANGE: Nginx listens on Port 80, not 8080
+        - containerPort: 80
         imagePullPolicy: Always
+        # --- NEW SECTION STARTS HERE ---
+        # These variables give your app permission to talk to Jenkins & SonarQube
+        env:
+          - name: JENKINS_URL
+            value: "http://172.31.47.1:8080"
+          - name: JENKINS_TOKEN
+            value: "118a59e31e4e967ba083fea6adf90aca31"
+          - name: SONAR_URL
+            value: "http://172.31.47.1:9000"
+          - name: SONAR_TOKEN
+            value: "118a59e31e4e967ba083fea6adf90aca31"
+        # --- NEW SECTION ENDS HERE ---
+
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: banking-service      # CHANGE: Updated service name
+  name: banking-service
 spec:
-  # NOTE: On AWS EKS, this creates a Classic Load Balancer.
-  # On a simple EC2 kubeadm setup, you might need 'NodePort' instead.
   type: NodePort         
   selector:
-    app: banking-app         # CHANGE: Points to the pods labeled 'banking-app'
+    app: banking-app
   ports:
   - name: http
     protocol: TCP
-    port: 80                 # The port you hit in the browser (http://loadbalancer:80)
+    port: 80
     targetPort: 80   
-    nodePort: 30007 # CHANGE: The port the container is listening on (Must match containerPort)
+    nodePort: 30007

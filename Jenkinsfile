@@ -63,7 +63,16 @@ pipeline {
 
         stage('Vulnerability Scan (Trivy)') {
             steps {
+                // 1. Run scan and show results in Jenkins Console (Table format)
                 sh 'trivy image --severity HIGH,CRITICAL jeevanc370/banking-app:latest'
+
+                // 2. Run scan again to generate JSON for System Health Dashboard
+                sh 'trivy image --format json --output trivy-report.json jeevanc370/banking-app:latest'
+
+                // 3. Send JSON to Backend API (Syncs data with your Dashboard)
+                // REPLACE <YOUR_WORKER_NODE_IP> with your K8s Node IP (e.g. 172.31.xx.xx)
+                // We use '|| true' so the build passes even if the backend isn't ready to receive data yet
+                sh "curl -X POST -H 'Content-Type: application/json' -d @trivy-report.json http://172.31.41.58:30007/api/trivy-webhook || true"
             }
         }
 
