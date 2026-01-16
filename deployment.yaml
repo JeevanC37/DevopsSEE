@@ -27,11 +27,12 @@ metadata:
 spec:
   # NOTE: On AWS EKS, this creates a Classic Load Balancer.
   # On a simple EC2 kubeadm setup, you might need 'NodePort' instead.
-  type: LoadBalancer         
+  type: NodePort         
   selector:
     app: banking-app         # CHANGE: Points to the pods labeled 'banking-app'
   ports:
   - name: http
     protocol: TCP
     port: 80                 # The port you hit in the browser (http://loadbalancer:80)
-    targetPort: 80           # CHANGE: The port the container is listening on (Must match containerPort)
+    targetPort: 80   
+    nodePort: 30007 # CHANGE: The port the container is listening on (Must match containerPort)
