@@ -11,7 +11,7 @@
 
     - name: Tag image
       # CHANGE: Retagging from local 'banking-app' to your Docker Hub repo
-      command: docker tag banking-app:latest jeevan370/banking-app:latest 
+      command: docker tag banking-app:latest jeevanc370/banking-app:latest 
 
     - name: Log in to Docker Hub
       community.docker.docker_login:
