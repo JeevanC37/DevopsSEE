@@ -16,7 +16,7 @@
     - name: Copy deployment.yaml to Kubernetes master
       copy:
         # CHANGE: Updated path from 'petstore' to 'banking-app'
-        src: /var/lib/jenkins/workspace/banking-app/deployment.yaml
+        src: /var/lib/jenkins/workspace/DevopsSEE/deployment.yaml
         dest: /home/ubuntu/
       become: yes
       become_user: root
