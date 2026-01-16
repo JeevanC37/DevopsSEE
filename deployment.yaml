@@ -15,7 +15,7 @@ spec:
       containers:
       - name: banking-app
         # CHANGE: Ensure this matches the image name you push in your Ansible playbook
-        image: sevenajay/banking-app:latest  
+        image: jeevanc370/banking-app:latest  
         ports:
         - containerPort: 80  # CHANGE: Nginx listens on Port 80, not 8080
         imagePullPolicy: Always
