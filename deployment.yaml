@@ -1,12 +1,13 @@
+# --- FRONTEND DEPLOYMENT ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: banking-app
 spec:
+  replicas: 1 
   selector:
     matchLabels:
       app: banking-app
-  replicas: 1 
   template: 
     metadata:
       labels:
@@ -18,20 +19,9 @@ spec:
         ports:
         - containerPort: 80
         imagePullPolicy: Always
-        # --- NEW SECTION STARTS HERE ---
-        # These variables give your app permission to talk to Jenkins & SonarQube
-        env:
-          - name: JENKINS_URL
-            value: "http://172.31.47.1:8080"
-          - name: JENKINS_TOKEN
-            value: "118a59e31e4e967ba083fea6adf90aca31"
-          - name: SONAR_URL
-            value: "http://172.31.47.1:9000"
-          - name: SONAR_TOKEN
-            value: "118a59e31e4e967ba083fea6adf90aca31"
-        # --- NEW SECTION ENDS HERE ---
 
 ---
+# --- FRONTEND SERVICE ---
 apiVersion: v1
 kind: Service
 metadata:
@@ -46,3 +36,54 @@ spec:
     port: 80
     targetPort: 80   
     nodePort: 30007
+
+---
+# --- BACKEND DEPLOYMENT (New) ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend-app
+  template:
+    metadata:
+      labels:
+        app: backend-app
+    spec:
+      containers:
+      - name: backend-app
+        # This matches the image we build in docker.yaml
+        image: jeevanc370/banking-backend:latest
+        ports:
+        - containerPort: 5000
+        imagePullPolicy: Always
+        # Credentials moved here so the Backend API can use them
+        env:
+          - name: JENKINS_URL
+            value: "http://172.31.47.1:8080"
+          - name: JENKINS_TOKEN
+            value: "118a59e31e4e967ba083fea6adf90aca31"
+          - name: SONAR_URL
+            value: "http://172.31.47.1:9000"
+          - name: SONAR_TOKEN
+            value: "118a59e31e4e967ba083fea6adf90aca31" # Ensure this is your actual Sonar token
+
+---
+# --- BACKEND SERVICE (New) ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+spec:
+  type: NodePort
+  selector:
+    app: backend-app
+  ports:
+  - name: api
+    protocol: TCP
+    port: 5000       # Internal Cluster Port
+    targetPort: 5000
+    nodePort: 30008  # External Access Port (Webhook hits this!)

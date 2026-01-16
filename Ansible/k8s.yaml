@@ -1,26 +1,34 @@
+---
 - name: Deploy Kubernetes Application
-  hosts: k8s  # Replace with your target Kubernetes master host or group
+  hosts: k8s  # Matches your inventory file group for the K8s Master
   gather_facts: yes
+  become: yes # Ensures we have permission to write files and run kubectl
 
   tasks:
     - name: Delete Old Deployment
+      # This deletes both Frontend and Backend because they are in the same file
       command: kubectl delete -f /home/ubuntu/deployment.yaml
-      # CRITICAL CHANGE: Prevents the pipeline from failing if the app 
-      # is not running yet (e.g., the very first run).
+      # CRITICAL: Prevents failure on the very first run when nothing exists yet
       ignore_errors: yes
 
     - name: Remove old manifest file
-      command: rm -rf /home/ubuntu/deployment.yaml
-      ignore_errors: yes # Safety check in case file is already gone
+      # Cleans up the previous YAML file to ensure we don't have stale config
+      file:
+        path: /home/ubuntu/deployment.yaml
+        state: absent
 
     - name: Copy deployment.yaml to Kubernetes master
       copy:
-        # CHANGE: Updated path from 'petstore' to 'banking-app'
+        # Source is your Jenkins workspace where the new file is
         src: /var/lib/jenkins/workspace/DevopsSEE/deployment.yaml
-        dest: /home/ubuntu/
-      become: yes
-      become_user: root
+        # Destination is the home directory of the user running kubectl
+        dest: /home/ubuntu/deployment.yaml
+        owner: ubuntu
+        group: ubuntu
+        mode: '0644'
 
     - name: Apply Deployment
-      # This creates the Pods and Service for your Banking App
+      # This command creates:
+      # 1. Banking App Frontend Deployment & Service (Port 30007)
+      # 2. Banking App Backend Deployment & Service (Port 30008)
       command: kubectl apply -f /home/ubuntu/deployment.yaml
