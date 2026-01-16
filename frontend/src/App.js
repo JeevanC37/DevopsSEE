@@ -8,7 +8,7 @@ import Transfer from './components/Transfer';
 import TransactionHistory from './components/TransactionHistory';
 import AccountDetails from './components/AccountDetails';
 import ProtectedRoute from './components/ProtectedRoute';
-import SystemHealth from './components/HealthDashboard';
+import HealthDashboard from './components/HealthDashboard';
 import './App.css';
 
 function App() {
@@ -29,7 +29,7 @@ function App() {
             <Route path="transfer" element={<Transfer />} />
             <Route path="transactions" element={<TransactionHistory />} />
             <Route path="account" element={<AccountDetails />} />
-            <Route path="/system-health" element={<SystemHealth />} />
+            <Route path="system-health" element={<HealthDashboard />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
