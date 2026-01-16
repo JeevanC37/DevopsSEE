@@ -3,13 +3,11 @@ pipeline {
     
     tools {
         nodejs 'node16'
-        // This name must match 'Manage Jenkins' -> 'Tools' -> 'SonarQube Scanner'
-        sonarScanner 'sonar-scanner' 
+        // REMOVED sonarScanner from here to fix the error
     }
     
     environment {
         DOCKER_CREDS = credentials('docker-hub-creds')
-        // Connects to the token we just saved
         SONAR_TOKEN = credentials('sonar-token') 
     }
 
@@ -38,14 +36,18 @@ pipeline {
 
         stage('SonarQube Analysis (SAST)') {
             steps {
-                dir('frontend') {
-                    // Uses the 'sonar-server' we configured in Step 3
-                    withSonarQubeEnv('sonar-server') { 
-                        sh "sonar-scanner \
-                            -Dsonar.projectKey=banking-app \
-                            -Dsonar.sources=src \
-                            -Dsonar.host.url=http://localhost:9000 \
-                            -Dsonar.login=${SONAR_TOKEN}"
+                script {
+                    // Fix: Find the scanner tool manually using the name you gave in Global Tools
+                    def scannerHome = tool 'sonar-scanner'
+                    
+                    dir('frontend') {
+                        withSonarQubeEnv('sonar-server') { 
+                            sh "${scannerHome}/bin/sonar-scanner \
+                                -Dsonar.projectKey=banking-app \
+                                -Dsonar.sources=src \
+                                -Dsonar.host.url=http://localhost:9000 \
+                                -Dsonar.login=${SONAR_TOKEN}"
+                        }
                     }
                 }
             }
@@ -61,7 +63,6 @@ pipeline {
 
         stage('Vulnerability Scan (Trivy)') {
             steps {
-                // Scans the Docker image for High/Critical vulnerabilities
                 sh 'trivy image --severity HIGH,CRITICAL jeevanc370/banking-app:latest'
             }
         }
