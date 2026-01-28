@@ -21,7 +21,7 @@ const Layout = () => {
     { name: 'Transfer', path: '/transfer', icon: ArrowRightLeft },
     { name: 'Transactions', path: '/transactions', icon: Receipt },
     { name: 'Account', path: '/account', icon: CreditCard },
-    { name: 'System Health', path: '/admin', icon: Activity }
+    { name: 'System Health', path: '/system-health', icon: Activity }
   ];
 
   const NavLinks = ({ mobile = false }) => (

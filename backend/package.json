@@ -1,6 +1,19 @@
 {
+  "name": "devsecops-backend",
+  "version": "1.0.0",
+  "description": "DevSecOps Banking App Backend - System Health API",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
   "dependencies": {
     "@kubernetes/client-node": "^1.4.0",
-    "axios": "^1.13.2"
+    "axios": "^1.13.2",
+    "cors": "^2.8.5",
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
   }
 }

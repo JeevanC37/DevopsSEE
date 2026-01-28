@@ -70,9 +70,8 @@ pipeline {
                 sh 'trivy image --format json --output trivy-report.json jeevanc370/banking-app:latest'
 
                 // 3. Send JSON to Backend API (Syncs data with your Dashboard)
-                // REPLACE <YOUR_WORKER_NODE_IP> with your K8s Node IP (e.g. 172.31.xx.xx)
-                // We use '|| true' so the build passes even if the backend isn't ready to receive data yet
-                sh "curl -X POST -H 'Content-Type: application/json' -d @trivy-report.json http://172.31.41.58:30007/api/trivy-webhook || true"
+                // Backend runs on NodePort 30008 - Update IP to your K8s Worker Node IP
+                sh "curl -X POST -H 'Content-Type: application/json' -d @trivy-report.json http://172.31.41.58:30008/api/trivy-webhook || true"
             }
         }
 

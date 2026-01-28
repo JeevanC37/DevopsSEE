@@ -1,35 +1,46 @@
+---
 - name: Docker Build and Push for Banking App
-  hosts: local  # Ensure this matches your Jenkins/Ansible host inventory  # Run tasks with sudo privileges
+  hosts: localhost  # Changed 'local' to 'localhost' to match Jenkins environment
+  gather_facts: yes
 
   tasks:  
-
-    - name: Build Docker Image
+    # --- FRONTEND SECTION ---
+    - name: Build Docker Image (Frontend)
       command: docker build -t banking-app .
       args:
-        # CHANGE: Update this path to your actual Jenkins workspace name
         chdir: /var/lib/jenkins/workspace/DevopsSEE
 
-    - name: Tag image
-      # CHANGE: Retagging from local 'banking-app' to your Docker Hub repo
+    - name: Tag image (Frontend)
       command: docker tag banking-app:latest jeevanc370/banking-app:latest 
 
+    # --- BACKEND SECTION (NEW) ---
+    - name: Build Docker Image (Backend)
+      # Uses the 'backend' folder where we created the Dockerfile
+      command: docker build -t banking-backend backend
+      args:
+        chdir: /var/lib/jenkins/workspace/DevopsSEE
+
+    - name: Tag image (Backend)
+      command: docker tag banking-backend:latest jeevanc370/banking-backend:latest
+
+    # --- SHARED LOGIN ---
     - name: Log in to Docker Hub
       community.docker.docker_login:
         registry_url: https://index.docker.io/v1/
-        # SECURITY NOTE: In real projects, use Ansible Vault or Jenkins secrets for these!
         username: "jeevanc370" 
         password: "204976Ca!"
 
-    - name: Push image
+    # --- PUSH SECTION ---
+    - name: Push image (Frontend)
       command: docker push jeevanc370/banking-app:latest
 
+    - name: Push image (Backend)
+      command: docker push jeevanc370/banking-backend:latest
+
+    # --- TEST CONTAINER SECTION (Frontend Only) ---
     - name: Remove old test container
       command: docker rm -f bank-test
-      ignore_errors: yes   # Crucial: Keeps going if the container doesn't exist yet
+      ignore_errors: yes
 
     - name: Run container (Test)
-      # CHANGE: 
-      # 1. Name: pet1 -> bank-test
-      # 2. Port: 8081:80 (Map host 8081 to container 80 because Nginx runs on 80)
-      # 3. Image: petstore -> banking-app
       command: docker run -d --name bank-test -p 8081:80 jeevanc370/banking-app:latest
