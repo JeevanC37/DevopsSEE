@@ -42,11 +42,12 @@ pipeline {
                     
                     dir('frontend') {
                         withSonarQubeEnv('sonar-server') { 
+                            // Use the actual SonarQube server IP (same as in deployment.yaml)
                             sh "${scannerHome}/bin/sonar-scanner \
                                 -Dsonar.projectKey=banking-app \
                                 -Dsonar.sources=src \
-                                -Dsonar.host.url=http://localhost:9000 \
-                                -Dsonar.login=${SONAR_TOKEN}"
+                                -Dsonar.host.url=http://172.31.47.1:9000 \
+                                -Dsonar.token=${SONAR_TOKEN}"
                         }
                     }
                 }
