@@ -70,11 +70,15 @@ app.post('/api/trivy-webhook', (req, res) => {
             results: report.Results || []
         };
         
-        // Optionally save to file for persistence
-        fs.writeFileSync(
-            path.join(__dirname, 'trivy-latest.json'), 
-            JSON.stringify(trivyData, null, 2)
-        );
+        // Optionally save to file for persistence (non-critical)
+        try {
+            fs.writeFileSync(
+                path.join(__dirname, 'trivy-latest.json'), 
+                JSON.stringify(trivyData, null, 2)
+            );
+        } catch (fsError) {
+            console.warn('[Trivy Webhook] Could not persist to file:', fsError.message);
+        }
         
         console.log('[Trivy Webhook] Processed:', vulnCounts);
         res.json({ success: true, message: 'Trivy data received', summary: vulnCounts });
@@ -226,7 +230,18 @@ app.get('/api/system-health', async (req, res) => {
         // =====================================================
         try {
             const kc = new k8s.KubeConfig();
-            kc.loadFromDefault();
+            
+            // Handle both in-cluster and local development environments
+            try {
+                kc.loadFromCluster(); // Try in-cluster config first (when running inside K8s pod)
+            } catch (clusterErr) {
+                try {
+                    kc.loadFromDefault(); // Fall back to kubeconfig file (local development)
+                } catch (defaultErr) {
+                    throw new Error('Unable to load Kubernetes config - neither in-cluster nor kubeconfig available');
+                }
+            }
+            
             const k8sApi = kc.makeApiClient(k8s.CoreV1Api);
             
             // Get Nodes

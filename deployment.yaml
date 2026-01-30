@@ -53,6 +53,7 @@ spec:
       labels:
         app: backend-app
     spec:
+      serviceAccountName: backend-sa
       containers:
       - name: backend-app
         # This matches the image we build in docker.yaml
@@ -60,16 +61,65 @@ spec:
         ports:
         - containerPort: 5000
         imagePullPolicy: Always
+        # Health Probes - Kubernetes will know if the pod is healthy
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 5000
+          initialDelaySeconds: 15
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 10
         # Credentials moved here so the Backend API can use them
         env:
           - name: JENKINS_URL
             value: "http://172.31.47.1:8080"
+          - name: JENKINS_USER
+            value: "admin"
           - name: JENKINS_TOKEN
             value: "118a59e31e4e967ba083fea6adf90aca31"
           - name: SONAR_URL
             value: "http://172.31.47.1:9000"
           - name: SONAR_TOKEN
             value: "118a59e31e4e967ba083fea6adf90aca31" # Ensure this is your actual Sonar token
+
+---
+# --- SERVICE ACCOUNT FOR BACKEND (Required for K8s API Access) ---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: backend-sa
+  namespace: default
+
+---
+# --- CLUSTER ROLE (Read-only access to nodes and pods) ---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: backend-cluster-role
+rules:
+  - apiGroups: [""]
+    resources: ["nodes", "pods"]
+    verbs: ["get", "list", "watch"]
+
+---
+# --- CLUSTER ROLE BINDING ---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: backend-cluster-role-binding
+subjects:
+  - kind: ServiceAccount
+    name: backend-sa
+    namespace: default
+roleRef:
+  kind: ClusterRole
+  name: backend-cluster-role
+  apiGroup: rbac.authorization.k8s.io
 
 ---
 # --- BACKEND SERVICE (New) ---
