@@ -2,7 +2,7 @@ pipeline {
     agent any
     
     tools {
-        nodejs 'node16'
+        nodejs 'node20'
         // REMOVED sonarScanner from here to fix the error
     }
     
