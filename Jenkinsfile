@@ -69,10 +69,8 @@ pipeline {
 
                 // 2. Run scan again to generate JSON for System Health Dashboard
                 sh 'trivy image --format json --output trivy-report.json jeevanc370/banking-app:latest'
-
-                // 3. Send JSON to Backend API (Syncs data with your Dashboard)
-                // Backend runs on NodePort 30008 - Update IP to your K8s Worker Node IP
-                sh "curl -X POST -H 'Content-Type: application/json' -d @trivy-report.json http://172.31.41.58:30008/api/trivy-webhook || true"
+                
+                // Note: Webhook will be sent AFTER deployment when backend is running
             }
         }
 
@@ -81,6 +79,21 @@ pipeline {
                 dir('Ansible') {
                     sh 'ansible-playbook k8s.yaml'
                 }
+            }
+        }
+
+        stage('Send Trivy Report to Dashboard') {
+            steps {
+                // Wait for backend pod to be ready
+                sh 'sleep 15'
+                
+                // Try both worker node IPs (pod could be on either node)
+                sh '''
+                    echo "Sending Trivy report to backend..."
+                    curl -X POST -H 'Content-Type: application/json' -d @trivy-report.json http://172.31.33.228:30008/api/trivy-webhook && echo "Sent to 172.31.33.228" || \
+                    curl -X POST -H 'Content-Type: application/json' -d @trivy-report.json http://172.31.41.58:30008/api/trivy-webhook && echo "Sent to 172.31.41.58" || \
+                    echo "Warning: Could not send Trivy report to backend"
+                '''
             }
         }
     }
