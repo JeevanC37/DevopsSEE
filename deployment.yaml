@@ -85,7 +85,7 @@ spec:
           - name: SONAR_URL
             value: "http://172.31.47.1:9000"
           - name: SONAR_TOKEN
-            value: "squ_f0ddcef5d2869e5ff202fc77761e5649e567b7db" # Ensure this is your actual Sonar token
+            value: "squ_d2b25fcc707511856151f9d22c17b3aac0f0ec6c" # Ensure this is your actual Sonar token
 
 ---
 # --- SERVICE ACCOUNT FOR BACKEND (Required for K8s API Access) ---
