@@ -5,18 +5,6 @@
   become: yes # Ensures we have permission to write files and run kubectl
 
   tasks:
-    - name: Delete Old Deployment
-      # This deletes both Frontend and Backend because they are in the same file
-      command: kubectl delete -f /home/ubuntu/deployment.yaml
-      # CRITICAL: Prevents failure on the very first run when nothing exists yet
-      ignore_errors: yes
-
-    - name: Remove old manifest file
-      # Cleans up the previous YAML file to ensure we don't have stale config
-      file:
-        path: /home/ubuntu/deployment.yaml
-        state: absent
-
     - name: Copy deployment.yaml to Kubernetes master
       copy:
         # Source is your Jenkins workspace where the new file is
@@ -27,8 +15,8 @@
         group: ubuntu
         mode: '0644'
 
-    - name: Apply Deployment
-      # This command creates:
-      # 1. Banking App Frontend Deployment & Service (Port 30007)
-      # 2. Banking App Backend Deployment & Service (Port 30008)
+    - name: Apply Deployment (Rolling Update)
+      # This uses kubectl apply which does a rolling update
+      # Pods are only restarted if the image or spec changes
+      # This preserves backend pod's in-memory Trivy data when nothing changed
       command: kubectl apply -f /home/ubuntu/deployment.yaml
