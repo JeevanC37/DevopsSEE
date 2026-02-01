@@ -6,7 +6,7 @@
   tasks:  
     # --- FRONTEND SECTION ---
     - name: Build Docker Image (Frontend)
-      command: docker build -t banking-app .
+      command: docker build --no-cache -t banking-app .
       args:
         chdir: /var/lib/jenkins/workspace/DevopsSEE
 
@@ -16,7 +16,7 @@
     # --- BACKEND SECTION (NEW) ---
     - name: Build Docker Image (Backend)
       # Uses the 'backend' folder where we created the Dockerfile
-      command: docker build -t banking-backend backend
+      command: docker build --no-cache -t banking-backend backend
       args:
         chdir: /var/lib/jenkins/workspace/DevopsSEE
 
