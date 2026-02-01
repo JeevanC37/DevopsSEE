@@ -84,15 +84,25 @@ pipeline {
 
         stage('Send Trivy Report to Dashboard') {
             steps {
-                // Wait for backend pod to be ready
-                sh 'sleep 15'
-                
-                // Try both worker node IPs (pod could be on either node)
+                // Wait for pod rollout to complete and stabilize
                 sh '''
+                    echo "Waiting for backend deployment to stabilize..."
+                    sleep 45
+                    
                     echo "Sending Trivy report to backend..."
-                    curl -X POST -H 'Content-Type: application/json' -d @trivy-report.json http://172.31.33.228:30008/api/trivy-webhook && echo "Sent to 172.31.33.228" || \
-                    curl -X POST -H 'Content-Type: application/json' -d @trivy-report.json http://172.31.41.58:30008/api/trivy-webhook && echo "Sent to 172.31.41.58" || \
-                    echo "Warning: Could not send Trivy report to backend"
+                    # Try multiple times with delay to ensure pod is ready
+                    for i in 1 2 3; do
+                        if curl -sf -X POST -H 'Content-Type: application/json' -d @trivy-report.json http://172.31.33.228:30008/api/trivy-webhook; then
+                            echo "SUCCESS: Trivy report sent to 172.31.33.228"
+                            exit 0
+                        elif curl -sf -X POST -H 'Content-Type: application/json' -d @trivy-report.json http://172.31.41.58:30008/api/trivy-webhook; then
+                            echo "SUCCESS: Trivy report sent to 172.31.41.58"
+                            exit 0
+                        fi
+                        echo "Attempt $i failed, waiting 10 seconds..."
+                        sleep 10
+                    done
+                    echo "Warning: Could not send Trivy report to backend after 3 attempts"
                 '''
             }
         }
