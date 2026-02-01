@@ -1,21 +1,22 @@
 import React, { useState } from 'react';
-import { mockTransactions } from '../data/mockData';
+import { useAuth } from '../context/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Badge } from './ui/badge';
-import { ArrowUpRight, ArrowDownRight, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, Search, Filter, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 
 const TransactionHistory = () => {
+  const { transactions, resetData } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
   // Filter transactions
-  const filteredTransactions = mockTransactions.filter(transaction => {
+  const filteredTransactions = transactions.filter(transaction => {
     const matchesSearch = transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          transaction.id.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = filterType === 'all' || transaction.type === filterType;
@@ -54,9 +55,19 @@ const TransactionHistory = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Transaction History</h1>
-        <p className="text-gray-600 mt-1">View and manage all your transactions</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Transaction History</h1>
+          <p className="text-gray-600 mt-1">View and manage all your transactions</p>
+        </div>
+        <Button 
+          variant="outline" 
+          onClick={resetData}
+          className="flex items-center gap-2"
+        >
+          <RefreshCw className="w-4 h-4" />
+          Reset Demo Data
+        </Button>
       </div>
 
       <Card>

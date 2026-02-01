@@ -2,10 +2,11 @@ import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
-import { User, Mail, CreditCard, Calendar, Shield, Award } from 'lucide-react';
+import { Button } from './ui/button';
+import { User, Mail, CreditCard, Calendar, Shield, Award, Download, FileText } from 'lucide-react';
 
 const AccountDetails = () => {
-  const { user } = useAuth();
+  const { user, transactions } = useAuth();
 
   const accountInfo = [
     { label: 'Account Holder', value: user.name, icon: User },
@@ -15,6 +16,127 @@ const AccountDetails = () => {
     { label: 'Account Status', value: 'Active', icon: Shield, badge: true },
     { label: 'Account Type', value: 'Premium', icon: Award, badge: true }
   ];
+
+  // Generate and download PDF statement
+  const downloadStatement = (month) => {
+    // Get random transactions for the month
+    const statementTransactions = transactions.slice(0, 10).map(t => ({
+      ...t,
+      date: month.includes('January') ? '2025-01-' + String(Math.floor(Math.random() * 28) + 1).padStart(2, '0') :
+            month.includes('December') ? '2024-12-' + String(Math.floor(Math.random() * 28) + 1).padStart(2, '0') :
+            '2024-11-' + String(Math.floor(Math.random() * 28) + 1).padStart(2, '0')
+    }));
+
+    const totalCredits = statementTransactions.filter(t => t.type === 'credit').reduce((sum, t) => sum + t.amount, 0);
+    const totalDebits = statementTransactions.filter(t => t.type === 'debit').reduce((sum, t) => sum + t.amount, 0);
+
+    // Create PDF content as HTML
+    const pdfContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>SecureBank Statement - ${month}</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
+          .header { text-align: center; border-bottom: 2px solid #2563eb; padding-bottom: 20px; margin-bottom: 30px; }
+          .header h1 { color: #2563eb; margin: 0; }
+          .header p { color: #666; margin: 5px 0; }
+          .account-info { display: flex; justify-content: space-between; margin-bottom: 30px; background: #f8fafc; padding: 20px; border-radius: 8px; }
+          .account-info div { flex: 1; }
+          .account-info h3 { margin: 0 0 5px 0; color: #374151; font-size: 14px; }
+          .account-info p { margin: 0; font-weight: bold; font-size: 16px; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+          th { background: #2563eb; color: white; padding: 12px; text-align: left; }
+          td { padding: 12px; border-bottom: 1px solid #e5e7eb; }
+          tr:hover { background: #f8fafc; }
+          .credit { color: #16a34a; font-weight: bold; }
+          .debit { color: #dc2626; font-weight: bold; }
+          .summary { background: #f8fafc; padding: 20px; border-radius: 8px; margin-top: 20px; }
+          .summary-row { display: flex; justify-content: space-between; margin: 10px 0; }
+          .summary-row.total { font-size: 18px; font-weight: bold; border-top: 2px solid #2563eb; padding-top: 15px; margin-top: 15px; }
+          .footer { text-align: center; margin-top: 40px; color: #666; font-size: 12px; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>🏦 SecureBank</h1>
+          <p>Monthly Account Statement</p>
+          <p><strong>${month}</strong></p>
+        </div>
+        
+        <div class="account-info">
+          <div>
+            <h3>Account Holder</h3>
+            <p>${user.name}</p>
+          </div>
+          <div>
+            <h3>Account Number</h3>
+            <p>${user.accountNumber}</p>
+          </div>
+          <div>
+            <h3>Statement Period</h3>
+            <p>${month}</p>
+          </div>
+        </div>
+
+        <h2>Transaction Details</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Description</th>
+              <th>Category</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${statementTransactions.map(t => `
+              <tr>
+                <td>${new Date(t.date).toLocaleDateString()}</td>
+                <td>${t.description}</td>
+                <td>${t.category}</td>
+                <td class="${t.type}">${t.type === 'credit' ? '+' : '-'}$${t.amount.toFixed(2)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+
+        <div class="summary">
+          <h3>Account Summary</h3>
+          <div class="summary-row">
+            <span>Total Credits:</span>
+            <span class="credit">+$${totalCredits.toFixed(2)}</span>
+          </div>
+          <div class="summary-row">
+            <span>Total Debits:</span>
+            <span class="debit">-$${totalDebits.toFixed(2)}</span>
+          </div>
+          <div class="summary-row total">
+            <span>Closing Balance:</span>
+            <span>$${(user.savingsBalance + user.checkingBalance).toFixed(2)}</span>
+          </div>
+        </div>
+
+        <div class="footer">
+          <p>This is an auto-generated statement from SecureBank.</p>
+          <p>For any queries, contact support@securebank.com | 1-800-SECURE</p>
+          <p>Generated on: ${new Date().toLocaleString()}</p>
+        </div>
+      </body>
+      </html>
+    `;
+
+    // Create a blob and download
+    const blob = new Blob([pdfContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `SecureBank_Statement_${month.replace(' ', '_')}.html`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="space-y-6">
@@ -112,7 +234,10 @@ const AccountDetails = () => {
       {/* Account Statements */}
       <Card>
         <CardHeader>
-          <CardTitle>Recent Statements</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="w-5 h-5" />
+            Recent Statements
+          </CardTitle>
           <CardDescription>Download your monthly account statements</CardDescription>
         </CardHeader>
         <CardContent>
@@ -121,11 +246,17 @@ const AccountDetails = () => {
               <div key={month} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
                 <div>
                   <p className="font-medium text-gray-900">{month} Statement</p>
-                  <p className="text-sm text-gray-500">PDF Document</p>
+                  <p className="text-sm text-gray-500">HTML Document (Printable)</p>
                 </div>
-                <Badge variant="outline" className="cursor-pointer hover:bg-blue-50">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => downloadStatement(month)}
+                  className="flex items-center gap-2 hover:bg-blue-50 hover:text-blue-600"
+                >
+                  <Download className="w-4 h-4" />
                   Download
-                </Badge>
+                </Button>
               </div>
             ))}
           </div>

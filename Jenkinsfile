@@ -3,7 +3,6 @@ pipeline {
     
     tools {
         nodejs 'node20'
-        // REMOVED sonarScanner from here to fix the error
     }
     
     environment {

@@ -6,10 +6,11 @@ import { ArrowUpRight, ArrowDownRight, Wallet, TrendingUp, CreditCard, Eye } fro
 import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { user, transactions } = useAuth();
   const navigate = useNavigate();
 
   const totalBalance = user.savingsBalance + user.checkingBalance;
+  const recentTransactions = transactions.slice(0, 5); // Get 5 most recent
 
   const quickActions = [
     { label: 'Transfer Funds', path: '/transfer', icon: ArrowUpRight, color: 'blue' },
@@ -110,44 +111,45 @@ const Dashboard = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center">
-                  <ArrowDownRight className="w-5 h-5 text-white" />
+            {recentTransactions.length === 0 ? (
+              <p className="text-gray-500 text-center py-4">No recent transactions</p>
+            ) : (
+              recentTransactions.map((transaction) => (
+                <div 
+                  key={transaction.id} 
+                  className={`flex items-center justify-between p-3 rounded-lg ${
+                    transaction.type === 'credit' ? 'bg-green-50' : 'bg-red-50'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                      transaction.type === 'credit' ? 'bg-green-600' : 'bg-red-600'
+                    }`}>
+                      {transaction.type === 'credit' ? (
+                        <ArrowDownRight className="w-5 h-5 text-white" />
+                      ) : (
+                        <ArrowUpRight className="w-5 h-5 text-white" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">{transaction.description}</p>
+                      <p className="text-sm text-gray-500">
+                        {new Date(transaction.date).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric'
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                  <span className={`font-semibold ${
+                    transaction.type === 'credit' ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {transaction.type === 'credit' ? '+' : '-'}${transaction.amount.toFixed(2)}
+                  </span>
                 </div>
-                <div>
-                  <p className="font-medium text-gray-900">Salary Deposit</p>
-                  <p className="text-sm text-gray-500">Jan 15, 2025</p>
-                </div>
-              </div>
-              <span className="text-green-600 font-semibold">+$5,500.00</span>
-            </div>
-
-            <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center">
-                  <ArrowUpRight className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">Electric Bill Payment</p>
-                  <p className="text-sm text-gray-500">Jan 14, 2025</p>
-                </div>
-              </div>
-              <span className="text-red-600 font-semibold">-$125.50</span>
-            </div>
-
-            <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center">
-                  <ArrowUpRight className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <p className="font-medium text-gray-900">Online Shopping</p>
-                  <p className="text-sm text-gray-500">Jan 13, 2025</p>
-                </div>
-              </div>
-              <span className="text-red-600 font-semibold">-$89.99</span>
-            </div>
+              ))
+            )}
           </div>
         </CardContent>
       </Card>

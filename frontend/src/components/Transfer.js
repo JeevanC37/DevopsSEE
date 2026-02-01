@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { ArrowRightLeft, CheckCircle } from 'lucide-react';
 
 const Transfer = () => {
-  const { user, updateBalance } = useAuth();
+  const { user, updateBalance, addTransaction } = useAuth();
   const [formData, setFormData] = useState({
     fromAccount: '',
     toAccount: '',
@@ -18,6 +18,7 @@ const Transfer = () => {
     description: ''
   });
   const [showSuccess, setShowSuccess] = useState(false);
+  const [transferDetails, setTransferDetails] = useState(null);
   const [error, setError] = useState('');
 
   const handleSubmit = (e) => {
@@ -51,6 +52,24 @@ const Transfer = () => {
     // Update balances
     updateBalance(formData.fromAccount, -amount);
     updateBalance(formData.toAccount, amount);
+
+    // Add transaction to history
+    const description = formData.description || 
+      `Transfer from ${formData.fromAccount.charAt(0).toUpperCase() + formData.fromAccount.slice(1)} to ${formData.toAccount.charAt(0).toUpperCase() + formData.toAccount.slice(1)}`;
+    
+    addTransaction({
+      description: description,
+      type: 'debit',
+      amount: amount,
+      category: 'Transfer'
+    });
+
+    setTransferDetails({
+      from: formData.fromAccount,
+      to: formData.toAccount,
+      amount: amount,
+      description: description
+    });
 
     setShowSuccess(true);
     setFormData({
@@ -221,10 +240,28 @@ const Transfer = () => {
           </DialogHeader>
           <div className="space-y-3 mt-4">
             <div className="p-4 bg-gray-50 rounded-lg space-y-2">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Amount:</span>
-                <span className="font-semibold">${formData.amount}</span>
-              </div>
+              {transferDetails && (
+                <>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Amount:</span>
+                    <span className="font-semibold text-green-600">${transferDetails.amount.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">From:</span>
+                    <span className="font-semibold capitalize">{transferDetails.from}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">To:</span>
+                    <span className="font-semibold capitalize">{transferDetails.to}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">New Balance:</span>
+                    <span className="font-semibold text-blue-600">
+                      ${(user.savingsBalance + user.checkingBalance).toFixed(2)}
+                    </span>
+                  </div>
+                </>
+              )}
             </div>
             <Button
               onClick={() => setShowSuccess(false)}

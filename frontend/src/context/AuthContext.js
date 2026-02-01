@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { mockUsers } from '../data/mockData';
+import { mockUsers, mockTransactions } from '../data/mockData';
 
 const AuthContext = createContext(null);
 
@@ -14,13 +14,24 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [transactions, setTransactions] = useState([]);
 
   useEffect(() => {
     // Check if user is logged in (from localStorage)
     const storedUser = localStorage.getItem('bankUser');
+    const storedTransactions = localStorage.getItem('bankTransactions');
+    
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
+    
+    if (storedTransactions) {
+      setTransactions(JSON.parse(storedTransactions));
+    } else {
+      setTransactions(mockTransactions);
+      localStorage.setItem('bankTransactions', JSON.stringify(mockTransactions));
+    }
+    
     setLoading(false);
   }, []);
 
@@ -58,8 +69,45 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const addTransaction = (transaction) => {
+    const newTransaction = {
+      id: `TXN${String(transactions.length + 1).padStart(3, '0')}`,
+      date: new Date().toISOString().split('T')[0],
+      ...transaction,
+      balance: user.savingsBalance + user.checkingBalance
+    };
+    
+    const updatedTransactions = [newTransaction, ...transactions];
+    setTransactions(updatedTransactions);
+    localStorage.setItem('bankTransactions', JSON.stringify(updatedTransactions));
+    
+    return newTransaction;
+  };
+
+  const resetData = () => {
+    // Reset to original mock data
+    const originalUser = mockUsers.find(u => u.id === user?.id);
+    if (originalUser) {
+      const userWithoutPassword = { ...originalUser };
+      delete userWithoutPassword.password;
+      setUser(userWithoutPassword);
+      localStorage.setItem('bankUser', JSON.stringify(userWithoutPassword));
+    }
+    setTransactions(mockTransactions);
+    localStorage.setItem('bankTransactions', JSON.stringify(mockTransactions));
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading, updateBalance }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      login, 
+      logout, 
+      loading, 
+      updateBalance, 
+      transactions, 
+      addTransaction,
+      resetData 
+    }}>
       {children}
     </AuthContext.Provider>
   );
