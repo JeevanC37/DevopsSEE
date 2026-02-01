@@ -92,8 +92,10 @@ const HealthDashboard = () => {
   const generateSonarQubeReport = () => {
     const reportHtml = `
       <!DOCTYPE html>
-      <html>
+      <html lang="en">
       <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>SonarQube Analysis Report - SecureBank</title>
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -207,8 +209,10 @@ const HealthDashboard = () => {
     
     const reportHtml = `
       <!DOCTYPE html>
-      <html>
+      <html lang="en">
       <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Trivy Security Scan Report - SecureBank</title>
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
