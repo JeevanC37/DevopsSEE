@@ -5,7 +5,8 @@ import { Badge } from './ui/badge';
 import { 
   CheckCircle, ShieldCheck, Server, Box, Workflow, Activity, AlertCircle,
   RefreshCw, Clock, XCircle, AlertTriangle, Play, Loader2, Bug, Code,
-  Shield, Database, Container, GitBranch, Terminal, Cpu, HardDrive
+  Shield, Database, Container, GitBranch, Terminal, Cpu, HardDrive,
+  Download, ExternalLink, FileText
 } from 'lucide-react';
 import { Button } from './ui/button';
 
@@ -83,6 +84,263 @@ const HealthDashboard = () => {
   const formatTime = (timestamp) => {
     if (!timestamp) return 'N/A';
     return new Date(timestamp).toLocaleString();
+  };
+
+  // ==================== REPORT GENERATION FUNCTIONS ====================
+  
+  // Generate SonarQube Report HTML
+  const generateSonarQubeReport = () => {
+    const reportHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>SonarQube Analysis Report - SecureBank</title>
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f5f5; padding: 40px; }
+          .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); overflow: hidden; }
+          .header { background: linear-gradient(135deg, #0891b2, #06b6d4); color: white; padding: 30px 40px; }
+          .header h1 { font-size: 28px; margin-bottom: 8px; }
+          .header p { opacity: 0.9; font-size: 14px; }
+          .content { padding: 40px; }
+          .status-banner { padding: 20px; border-radius: 12px; margin-bottom: 30px; display: flex; align-items: center; gap: 15px; }
+          .status-banner.passed { background: #dcfce7; border: 2px solid #22c55e; }
+          .status-banner.failed { background: #fee2e2; border: 2px solid #ef4444; }
+          .status-banner h2 { font-size: 24px; }
+          .status-banner.passed h2 { color: #15803d; }
+          .status-banner.failed h2 { color: #b91c1c; }
+          .metrics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
+          .metric-card { background: #f8fafc; border-radius: 12px; padding: 25px; text-align: center; border: 1px solid #e2e8f0; }
+          .metric-card .icon { font-size: 32px; margin-bottom: 10px; }
+          .metric-card .value { font-size: 36px; font-weight: bold; color: #1e293b; }
+          .metric-card .label { color: #64748b; font-size: 14px; margin-top: 5px; }
+          .metric-card.bugs .icon { color: #ef4444; }
+          .metric-card.vulns .icon { color: #f97316; }
+          .metric-card.smells .icon { color: #eab308; }
+          .details-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+          .detail-item { background: #f8fafc; padding: 20px; border-radius: 10px; border-left: 4px solid #0891b2; }
+          .detail-item .label { color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+          .detail-item .value { font-size: 20px; font-weight: 600; color: #1e293b; margin-top: 5px; }
+          .footer { background: #f8fafc; padding: 25px 40px; text-align: center; color: #64748b; font-size: 12px; border-top: 1px solid #e2e8f0; }
+          .rating { display: inline-block; width: 40px; height: 40px; line-height: 40px; border-radius: 8px; font-weight: bold; font-size: 18px; }
+          .rating.A { background: #22c55e; color: white; }
+          .rating.B { background: #84cc16; color: white; }
+          .rating.C { background: #eab308; color: white; }
+          .rating.D { background: #f97316; color: white; }
+          .rating.E { background: #ef4444; color: white; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🔍 SonarQube Analysis Report</h1>
+            <p>SecureBank Banking Application - Static Code Analysis (SAST)</p>
+          </div>
+          <div class="content">
+            <div class="status-banner ${sonar?.status === 'OK' ? 'passed' : 'failed'}">
+              <span style="font-size: 40px;">${sonar?.status === 'OK' ? '✅' : '❌'}</span>
+              <div>
+                <h2>Quality Gate: ${sonar?.status === 'OK' ? 'PASSED' : 'FAILED'}</h2>
+                <p style="color: #64748b;">Analysis completed on ${new Date().toLocaleString()}</p>
+              </div>
+            </div>
+
+            <h3 style="margin-bottom: 20px; color: #1e293b;">📊 Code Quality Metrics</h3>
+            <div class="metrics-grid">
+              <div class="metric-card bugs">
+                <div class="icon">🐛</div>
+                <div class="value">${sonar?.metrics?.bugs || '0'}</div>
+                <div class="label">Bugs</div>
+              </div>
+              <div class="metric-card vulns">
+                <div class="icon">🛡️</div>
+                <div class="value">${sonar?.metrics?.vulnerabilities || '0'}</div>
+                <div class="label">Vulnerabilities</div>
+              </div>
+              <div class="metric-card smells">
+                <div class="icon">⚠️</div>
+                <div class="value">${sonar?.metrics?.codeSmells || '0'}</div>
+                <div class="label">Code Smells</div>
+              </div>
+            </div>
+
+            <h3 style="margin-bottom: 20px; color: #1e293b;">📈 Detailed Analysis</h3>
+            <div class="details-grid">
+              <div class="detail-item">
+                <div class="label">Code Coverage</div>
+                <div class="value">${sonar?.metrics?.coverage || 'N/A'}</div>
+              </div>
+              <div class="detail-item">
+                <div class="label">Duplications</div>
+                <div class="value">${sonar?.metrics?.duplications || 'N/A'}</div>
+              </div>
+              <div class="detail-item">
+                <div class="label">Lines of Code</div>
+                <div class="value">${sonar?.metrics?.linesOfCode || 'N/A'}</div>
+              </div>
+              <div class="detail-item">
+                <div class="label">Security Rating</div>
+                <div class="value">
+                  <span class="rating ${sonar?.metrics?.securityRating || 'A'}">${sonar?.metrics?.securityRating || 'A'}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="footer">
+            <p>Generated by SecureBank DevSecOps Pipeline | SonarQube Static Analysis</p>
+            <p style="margin-top: 5px;">Report generated: ${new Date().toLocaleString()}</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+    return reportHtml;
+  };
+
+  // Generate Trivy Report HTML
+  const generateTrivyReport = () => {
+    const totalVulns = (trivy?.vulnerabilities?.critical || 0) + 
+                       (trivy?.vulnerabilities?.high || 0) + 
+                       (trivy?.vulnerabilities?.medium || 0) + 
+                       (trivy?.vulnerabilities?.low || 0) + 
+                       (trivy?.vulnerabilities?.unknown || 0);
+    
+    const reportHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Trivy Security Scan Report - SecureBank</title>
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f5f5; padding: 40px; }
+          .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); overflow: hidden; }
+          .header { background: linear-gradient(135deg, #dc2626, #f97316); color: white; padding: 30px 40px; }
+          .header h1 { font-size: 28px; margin-bottom: 8px; }
+          .header p { opacity: 0.9; font-size: 14px; }
+          .content { padding: 40px; }
+          .status-banner { padding: 20px; border-radius: 12px; margin-bottom: 30px; display: flex; align-items: center; gap: 15px; }
+          .status-banner.secure { background: #dcfce7; border: 2px solid #22c55e; }
+          .status-banner.warning { background: #fef3c7; border: 2px solid #f59e0b; }
+          .status-banner.critical { background: #fee2e2; border: 2px solid #ef4444; }
+          .status-banner h2 { font-size: 24px; }
+          .status-banner.secure h2 { color: #15803d; }
+          .status-banner.warning h2 { color: #b45309; }
+          .status-banner.critical h2 { color: #b91c1c; }
+          .vuln-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-bottom: 30px; }
+          .vuln-card { border-radius: 12px; padding: 20px; text-align: center; }
+          .vuln-card .count { font-size: 36px; font-weight: bold; }
+          .vuln-card .label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 5px; }
+          .vuln-card.critical { background: #fee2e2; color: #991b1b; }
+          .vuln-card.high { background: #ffedd5; color: #c2410c; }
+          .vuln-card.medium { background: #fef3c7; color: #a16207; }
+          .vuln-card.low { background: #dbeafe; color: #1e40af; }
+          .vuln-card.unknown { background: #f3f4f6; color: #4b5563; }
+          .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+          .info-item { background: #f8fafc; padding: 20px; border-radius: 10px; border-left: 4px solid #dc2626; }
+          .info-item .label { color: #64748b; font-size: 12px; text-transform: uppercase; }
+          .info-item .value { font-size: 16px; font-weight: 600; color: #1e293b; margin-top: 5px; word-break: break-all; }
+          .summary-box { background: #f0fdf4; border: 1px solid #86efac; border-radius: 12px; padding: 25px; margin-top: 30px; }
+          .summary-box h3 { color: #166534; margin-bottom: 15px; }
+          .summary-box ul { list-style: none; }
+          .summary-box li { padding: 8px 0; color: #15803d; display: flex; align-items: center; gap: 10px; }
+          .summary-box li::before { content: "✓"; font-weight: bold; }
+          .footer { background: #f8fafc; padding: 25px 40px; text-align: center; color: #64748b; font-size: 12px; border-top: 1px solid #e2e8f0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🛡️ Trivy Security Scan Report</h1>
+            <p>Container Vulnerability Assessment - SecureBank Banking Application</p>
+          </div>
+          <div class="content">
+            <div class="status-banner ${trivy?.scanStatus === 'PASSED' ? 'secure' : trivy?.vulnerabilities?.critical > 0 ? 'critical' : 'warning'}">
+              <span style="font-size: 40px;">${trivy?.scanStatus === 'PASSED' ? '✅' : trivy?.vulnerabilities?.critical > 0 ? '🚨' : '⚠️'}</span>
+              <div>
+                <h2>Scan Status: ${trivy?.scanStatus === 'PASSED' ? 'SECURE - No Critical Issues' : trivy?.vulnerabilities?.critical > 0 ? 'CRITICAL ISSUES FOUND' : 'Vulnerabilities Detected'}</h2>
+                <p style="color: #64748b;">Total vulnerabilities found: ${totalVulns}</p>
+              </div>
+            </div>
+
+            <h3 style="margin-bottom: 20px; color: #1e293b;">🔍 Vulnerability Summary</h3>
+            <div class="vuln-grid">
+              <div class="vuln-card critical">
+                <div class="count">${trivy?.vulnerabilities?.critical || 0}</div>
+                <div class="label">Critical</div>
+              </div>
+              <div class="vuln-card high">
+                <div class="count">${trivy?.vulnerabilities?.high || 0}</div>
+                <div class="label">High</div>
+              </div>
+              <div class="vuln-card medium">
+                <div class="count">${trivy?.vulnerabilities?.medium || 0}</div>
+                <div class="label">Medium</div>
+              </div>
+              <div class="vuln-card low">
+                <div class="count">${trivy?.vulnerabilities?.low || 0}</div>
+                <div class="label">Low</div>
+              </div>
+              <div class="vuln-card unknown">
+                <div class="count">${trivy?.vulnerabilities?.unknown || 0}</div>
+                <div class="label">Unknown</div>
+              </div>
+            </div>
+
+            <h3 style="margin-bottom: 20px; color: #1e293b;">📋 Scan Details</h3>
+            <div class="info-grid">
+              <div class="info-item">
+                <div class="label">Image Scanned</div>
+                <div class="value">${trivy?.imageScanned || 'N/A'}</div>
+              </div>
+              <div class="info-item">
+                <div class="label">Scan Time</div>
+                <div class="value">${trivy?.lastScan ? new Date(trivy.lastScan).toLocaleString() : 'N/A'}</div>
+              </div>
+            </div>
+
+            ${trivy?.scanStatus === 'PASSED' ? `
+            <div class="summary-box">
+              <h3>🎉 Security Assessment Summary</h3>
+              <ul>
+                <li>No critical vulnerabilities detected</li>
+                <li>No high severity issues found</li>
+                <li>Container image meets security standards</li>
+                <li>Safe for production deployment</li>
+              </ul>
+            </div>
+            ` : ''}
+          </div>
+          <div class="footer">
+            <p>Generated by SecureBank DevSecOps Pipeline | Trivy Container Scanner</p>
+            <p style="margin-top: 5px;">Report generated: ${new Date().toLocaleString()}</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+    return reportHtml;
+  };
+
+  // Download report as HTML file
+  const downloadReport = (type) => {
+    const html = type === 'sonarqube' ? generateSonarQubeReport() : generateTrivyReport();
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${type === 'sonarqube' ? 'SonarQube' : 'Trivy'}_Report_${new Date().toISOString().split('T')[0]}.html`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  // Open report in new browser tab
+  const viewReportInBrowser = (type) => {
+    const html = type === 'sonarqube' ? generateSonarQubeReport() : generateTrivyReport();
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
   };
 
   // Loading State
@@ -343,6 +601,27 @@ const HealthDashboard = () => {
                 <p className="font-bold text-lg text-indigo-700">{sonar?.metrics?.linesOfCode || 'N/A'}</p>
               </div>
             </div>
+            {/* Report Actions */}
+            <div className="flex gap-2 mt-4 pt-4 border-t">
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="flex-1 flex items-center justify-center gap-2 hover:bg-cyan-50"
+                onClick={() => viewReportInBrowser('sonarqube')}
+              >
+                <ExternalLink className="w-4 h-4" />
+                View Report
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="flex-1 flex items-center justify-center gap-2 hover:bg-cyan-50"
+                onClick={() => downloadReport('sonarqube')}
+              >
+                <Download className="w-4 h-4" />
+                Download
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
@@ -398,6 +677,27 @@ const HealthDashboard = () => {
                 <p className="text-xs text-gray-600 flex items-center gap-1"><Clock className="w-3 h-3" /> Last Scan</p>
                 <p className="font-semibold text-gray-900 mt-1 text-sm">{trivy?.lastScan ? new Date(trivy.lastScan).toLocaleString() : 'Never'}</p>
               </div>
+            </div>
+            {/* Report Actions */}
+            <div className="flex gap-2 mt-4 pt-4 border-t">
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="flex-1 flex items-center justify-center gap-2 hover:bg-red-50"
+                onClick={() => viewReportInBrowser('trivy')}
+              >
+                <ExternalLink className="w-4 h-4" />
+                View Report
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="flex-1 flex items-center justify-center gap-2 hover:bg-red-50"
+                onClick={() => downloadReport('trivy')}
+              >
+                <Download className="w-4 h-4" />
+                Download
+              </Button>
             </div>
           </CardContent>
         </Card>
