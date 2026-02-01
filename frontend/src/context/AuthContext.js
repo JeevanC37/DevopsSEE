@@ -56,13 +56,22 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('bankUser');
   };
 
-  const updateBalance = (accountType, amount) => {
+  const updateBalance = (accountType, amount, accountType2 = null, amount2 = null) => {
     if (user) {
       const updatedUser = { ...user };
+      // First account update
       if (accountType === 'savings') {
         updatedUser.savingsBalance += amount;
       } else if (accountType === 'checking') {
         updatedUser.checkingBalance += amount;
+      }
+      // Second account update (for transfers between accounts)
+      if (accountType2 && amount2 !== null) {
+        if (accountType2 === 'savings') {
+          updatedUser.savingsBalance += amount2;
+        } else if (accountType2 === 'checking') {
+          updatedUser.checkingBalance += amount2;
+        }
       }
       setUser(updatedUser);
       localStorage.setItem('bankUser', JSON.stringify(updatedUser));

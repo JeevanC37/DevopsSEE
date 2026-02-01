@@ -49,9 +49,8 @@ const Transfer = () => {
       return;
     }
 
-    // Update balances
-    updateBalance(formData.fromAccount, -amount);
-    updateBalance(formData.toAccount, amount);
+    // Update both balances in a single call to avoid race condition
+    updateBalance(formData.fromAccount, -amount, formData.toAccount, amount);
 
     // Add transaction to history
     const description = formData.description || 
