@@ -37,8 +37,8 @@ const Transfer = () => {
       return;
     }
 
-    if (amount <= 0) {
-      setError('Amount must be greater than zero');
+    if (isNaN(amount) || amount <= 0) {
+      setError('Please enter a valid amount greater than zero');
       return;
     }
 
@@ -234,7 +234,13 @@ const Transfer = () => {
             </div>
             <DialogTitle className="text-center text-2xl">Transfer Successful!</DialogTitle>
             <DialogDescription className="text-center">
-              Your transfer has been completed successfully.
+              {transferDetails ? (
+                <span className="text-lg font-semibold text-green-600">
+                  ${transferDetails.amount?.toFixed(2) || '0.00'} transferred successfully
+                </span>
+              ) : (
+                'Your transfer has been completed successfully.'
+              )}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 mt-4">
@@ -242,8 +248,10 @@ const Transfer = () => {
               {transferDetails && (
                 <>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Amount:</span>
-                    <span className="font-semibold text-green-600">${transferDetails.amount.toFixed(2)}</span>
+                    <span className="text-gray-600">Amount Transferred:</span>
+                    <span className="font-bold text-xl text-green-600">
+                      ${transferDetails.amount?.toFixed(2) || '0.00'}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">From:</span>
@@ -253,8 +261,8 @@ const Transfer = () => {
                     <span className="text-gray-600">To:</span>
                     <span className="font-semibold capitalize">{transferDetails.to}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">New Balance:</span>
+                  <div className="flex justify-between border-t pt-2 mt-2">
+                    <span className="text-gray-600">Total Balance:</span>
                     <span className="font-semibold text-blue-600">
                       ${(user.savingsBalance + user.checkingBalance).toFixed(2)}
                     </span>
