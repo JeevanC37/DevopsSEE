@@ -49,6 +49,30 @@ pipeline {
                                 -Dsonar.token=${SONAR_TOKEN}"
                         }
                     }
+
+                    // ============================================================
+                    // DEMO SECTION: STRICT QUALITY GATE (Currently Disabled)
+                    // ============================================================
+                    // Instructions for Demo:
+                    // 1. Uncomment the block below to demonstrate "Strict Mode".
+                    // 2. This will force the pipeline to PAUSE and wait for SonarQube.
+                    // 3. If the Quality Gate is Red (Failed), the pipeline will STOP here.
+                    
+                    /* <-- Remove this slash-star to uncomment
+                    
+                    echo "Waiting for Quality Gate..."
+                    
+                    // Wait for SonarQube to finish processing the report
+                    timeout(time: 2, unit: 'MINUTES') {
+                        // abortPipeline: true means "Kill the build if Quality Gate fails"
+                        def qg = waitForQualityGate()
+                        if (qg.status != 'OK') {
+                            error "Pipeline aborted due to Quality Gate failure: ${qg.status}"
+                        }
+                    }
+                    
+                    */  // <-- Remove this star-slash to uncomment
+                    // ============================================================
                 }
             }
         }
@@ -68,8 +92,6 @@ pipeline {
 
                 // 2. Run scan again to generate JSON for System Health Dashboard
                 sh 'trivy image --format json --output trivy-report.json jeevanc370/banking-app:latest'
-                
-                // Note: Webhook will be sent AFTER deployment when backend is running
             }
         }
 
